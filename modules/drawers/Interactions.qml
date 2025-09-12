@@ -54,6 +54,8 @@ CustomMouseArea {
     }
 
     anchors.fill: parent
+    anchors.rightMargin: -1
+    anchors.bottomMargin: -1
     hoverEnabled: true
 
     onPressed: event => dragStart = Qt.point(event.x, event.y)
@@ -123,7 +125,8 @@ CustomMouseArea {
 
         // Show launcher on hover, or show/hide on drag if hover is disabled
         if (Config.launcher.showOnHover) {
-            visibilities.launcher = inBottomPanel(panels.launcher, x, y);
+            if (!visibilities.launcher && inBottomPanel(panels.launcher, x, y))
+                visibilities.launcher = true;
         } else if (pressed && inBottomPanel(panels.launcher, dragStart.x, dragStart.y) && withinPanelWidth(panels.launcher, x, y)) {
             const dragY = y - dragStart.y;
             if (dragY < -Config.launcher.dragThreshold)

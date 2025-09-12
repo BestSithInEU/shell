@@ -1,14 +1,74 @@
 #include "filesystemmodel.hpp"
 
-#include <QAbstractListModel>
-#include <QDir>
-#include <QDirIterator>
-#include <QFileInfo>
-#include <QFutureWatcher>
-#include <QImageReader>
-#include <QObject>
-#include <QtConcurrent>
-#include <qqmlintegration.h>
+#include <qdiriterator.h>
+#include <qfuturewatcher.h>
+#include <qtconcurrentrun.h>
+
+namespace caelestia {
+
+FileSystemEntry::FileSystemEntry(const QString& path, const QString& relativePath, QObject* parent)
+    : QObject(parent)
+    , m_fileInfo(QFileInfo(path))
+    , m_path(path)
+    , m_relativePath(relativePath)
+    , m_isImageInitialised(false)
+    , m_mimeTypeInitialised(false) {}
+
+QString FileSystemEntry::path() const {
+    return m_path;
+};
+
+QString FileSystemEntry::relativePath() const {
+    return m_relativePath;
+};
+
+QString FileSystemEntry::name() const {
+    return m_fileInfo.fileName();
+};
+
+QString FileSystemEntry::parentDir() const {
+    return m_fileInfo.absolutePath();
+};
+
+QString FileSystemEntry::suffix() const {
+    return m_fileInfo.completeSuffix();
+};
+
+qint64 FileSystemEntry::size() const {
+    return m_fileInfo.size();
+};
+
+bool FileSystemEntry::isDir() const {
+    return m_fileInfo.isDir();
+};
+
+bool FileSystemEntry::isImage() const {
+    if (!m_isImageInitialised) {
+        QImageReader reader(m_path);
+        m_isImage = reader.canRead();
+        m_isImageInitialised = true;
+    }
+    return m_isImage;
+}
+
+QString FileSystemEntry::mimeType() const {
+    if (!m_mimeTypeInitialised) {
+        const QMimeDatabase db;
+        m_mimeType = db.mimeTypeForFile(m_path).name();
+        m_mimeTypeInitialised = true;
+    }
+    return m_mimeType;
+}
+
+FileSystemModel::FileSystemModel(QObject* parent)
+    : QAbstractListModel(parent)
+    , m_recursive(false)
+    , m_watchChanges(true)
+    , m_showHidden(false)
+    , m_filter(NoFilter) {
+    connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, &FileSystemModel::watchDirIfRecursive);
+    connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, &FileSystemModel::updateEntriesForDir);
+}
 
 int FileSystemModel::rowCount(const QModelIndex& parent) const {
     if (parent != QModelIndex()) {
@@ -366,3 +426,5 @@ bool FileSystemModel::compareEntries(const FileSystemEntry* a, const FileSystemE
     }
     return a->relativePath().localeAwareCompare(b->relativePath()) < 0;
 }
+
+} // namespace caelestia
