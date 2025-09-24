@@ -11,6 +11,7 @@ Item {
 
     required property Props props
     required property Flickable container
+    required property var visibilities
 
     readonly property alias repeater: repeater
     readonly property int spacing: Appearance.spacing.small
@@ -79,6 +80,7 @@ Item {
             cursorShape: pressed ? Qt.ClosedHandCursor : undefined
             acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
             preventStealing: true
+            enabled: !closed
 
             drag.target: this
             drag.axis: Drag.XAxis
@@ -144,6 +146,7 @@ Item {
                 modelData: notif.modelData
                 props: root.props
                 container: root.container
+                visibilities: root.visibilities
             }
 
             Behavior on x {
